@@ -1,5 +1,6 @@
 package max.lab.xdevfeign;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -12,5 +13,6 @@ public class Book implements ApiResponseBody {
     private LocalDate dateOfPublish;
     private BigDecimal price;
 
+    @JsonIgnore
     private Error error;
 }
