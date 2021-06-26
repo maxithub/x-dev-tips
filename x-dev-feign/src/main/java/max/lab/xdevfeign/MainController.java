@@ -1,6 +1,5 @@
 package max.lab.xdevfeign;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -17,8 +16,9 @@ public class MainController {
         var theBook = BookService.FALLBACK_BOOK;
         try {
             theBook = service.createBook(book);
-        } catch (FeignException.BadRequest e) {
-            log.error("Some issue with the request: {}", e.status());
+            if (theBook.getError() != null) {
+                log.error("Failed to create book, got error message: {}", theBook.getError());
+            }
         } catch (Exception e) {
             log.error("Other exception", e);
         }

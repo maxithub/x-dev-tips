@@ -1,5 +1,7 @@
 package max.lab.xdevfeign;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.openfeign.FallbackFactory;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -9,8 +11,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-//@FeignClient(name = "bookService", url = "http://localhost:8081", fallbackFactory = BookService.FallbackImpl.class)
-@FeignClient(name = "bookService", url = "http://localhost:8081")
+import static max.lab.xdevfeign.ApiResponseBody.fallback;
+
+@FeignClient(name = "bookService", url = "http://localhost:8081", fallbackFactory = BookService.FallbackImpl.class)
 public interface BookService {
     Book FALLBACK_BOOK = new Book();
 
@@ -22,21 +25,23 @@ public interface BookService {
 
     @Slf4j
     @Component
+    @RequiredArgsConstructor
     class FallbackImpl implements FallbackFactory<BookService> {
+        private final ObjectMapper objectMapper;
 
         @Override
         public BookService create(Throwable cause) {
             return new BookService() {
                 @Override
                 public Book createBook(Book book) {
-                    log.error("Failed to create book", cause);
-                    return FALLBACK_BOOK;
+                    return fallback(objectMapper, cause, Book.class, FALLBACK_BOOK,
+                            log, "Failed to create book");
                 }
 
                 @Override
                 public Book findBook(String isbn) {
-                    log.error("Failed to find book", cause);
-                    return FALLBACK_BOOK;
+                    return fallback(objectMapper, cause, Book.class, FALLBACK_BOOK,
+                            log, "Failed to find book");
                 }
             };
         }
