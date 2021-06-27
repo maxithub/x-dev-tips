@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
-public class Book implements ApiResponseBody {
+public class Book implements Response {
     private String isbn;
     private String title;
     private LocalDate dateOfPublish;

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import static max.lab.xdevfeign.ApiResponseBody.fallback;
+import static max.lab.xdevfeign.Response.fallback;
 
 @FeignClient(name = "bookService", url = "http://localhost:8081", fallbackFactory = BookService.FallbackImpl.class)
 public interface BookService {

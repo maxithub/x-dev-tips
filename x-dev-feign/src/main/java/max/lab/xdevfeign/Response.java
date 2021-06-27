@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
 
-public interface ApiResponseBody {
+public interface Response {
     default Error getError() {
         return null;
     }
@@ -14,22 +14,22 @@ public interface ApiResponseBody {
     default void setError(Error error) { }
 
 
-    static <T extends ApiResponseBody> T fallback(ObjectMapper objectMapper,
-                                                  Throwable cause,
-                                                  Class<T> clazz,
-                                                  T defaultValue,
-                                                  Logger log,
-                                                  String template,
-                                                  Object... args) {
-        var apiResponseBody = defaultValue;
+    static <T extends Response> T fallback(ObjectMapper objectMapper,
+                                           Throwable cause,
+                                           Class<T> clazz,
+                                           T defaultValue,
+                                           Logger log,
+                                           String template,
+                                           Object... args) {
+        var response = defaultValue;
         if (cause instanceof FeignClientException) {
             FeignClientException exception = (FeignClientException) cause;
             var bytes = exception.responseBody().map(ByteBuffer::array).orElse(null);
             if (bytes != null) {
                 try {
                     Error error = objectMapper.readValue(bytes, Error.class);
-                    apiResponseBody = clazz.getDeclaredConstructor().newInstance();
-                    apiResponseBody.setError(error);
+                    response = clazz.getDeclaredConstructor().newInstance();
+                    response.setError(error);
                 } catch (Exception e) {
                     log.error("Failed to create object for type {} or parse error from response body", clazz, e);
                 }
@@ -37,6 +37,6 @@ public interface ApiResponseBody {
         } else {
             log.error(template, args);
         }
-        return apiResponseBody;
+        return response;
     }
 }
