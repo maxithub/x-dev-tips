@@ -21,6 +21,7 @@ import org.springframework.cloud.openfeign.support.ResponseEntityDecoder;
 import org.springframework.cloud.openfeign.support.SpringDecoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -78,14 +79,27 @@ public class FeignConfiguration {
     public RequestInterceptor feignAcceptGzipEncodingInterceptor() {
         return new FeignAcceptGzipEncodingInterceptor(new FeignClientEncodingProperties()) { };
     }
+    
+    private static String PROP_NAME = "circuitBreaker.%s.%s";
+    
+    private <T> T getCircuitBreakerProperty(Environment env, String id, String name, Class<T> clz, T defaultValue) {
+        var propName = String.format(PROP_NAME, id, name);
+        var defaultPropName = String.format(PROP_NAME, "default", name);
+        var value = env.getProperty(propName, clz, env.getProperty(defaultPropName, clz, defaultValue));
+        return value;
+    }
 
     @Bean
-    public Customizer<Resilience4JCircuitBreakerFactory> defaultCustomizer() {
+    public Customizer<Resilience4JCircuitBreakerFactory> defaultCustomizer(Environment env) {
         return factory -> factory.configureDefault(id -> new Resilience4JConfigBuilder(id)
                 .circuitBreakerConfig(
-                        CircuitBreakerConfig.from(CircuitBreakerConfig.ofDefaults()).ignoreExceptions(
-                                FeignException.FeignClientException.class
-                        ).build()
+                		CircuitBreakerConfig.from(CircuitBreakerConfig.ofDefaults())
+                        .ignoreExceptions(FeignException.FeignClientException.class)
+                        .failureRateThreshold(getCircuitBreakerProperty(env, id, "failureRateThreshold", Float.class, 50F))
+                        .minimumNumberOfCalls(getCircuitBreakerProperty(env, id, "minimumNumberOfCalls", Integer.class, 100))
+                        .slidingWindowSize(getCircuitBreakerProperty(env, id, "slidingWindowSize", Integer.class, 100))
+                        .waitDurationInOpenState(getCircuitBreakerProperty(env, id, "waitDurationInOpenState", Duration.class, Duration.ofSeconds(60L)))
+                        .build()
                 ).build());
     }
 

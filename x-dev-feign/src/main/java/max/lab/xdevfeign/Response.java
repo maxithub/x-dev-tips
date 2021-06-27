@@ -35,7 +35,7 @@ public interface Response {
                 }
             }
         } else {
-            log.error(template, args);
+            log.error(template, args, cause);
         }
         return response;
     }

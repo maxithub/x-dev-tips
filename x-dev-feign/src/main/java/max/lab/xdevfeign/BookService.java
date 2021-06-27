@@ -15,7 +15,7 @@ import static max.lab.xdevfeign.Response.fallback;
 
 @FeignClient(name = "bookService", url = "http://localhost:8081", fallbackFactory = BookService.FallbackImpl.class)
 public interface BookService {
-    Book FALLBACK_BOOK = new Book();
+    Book FALLBACK_BOOK = new Book(); // ==
 
     @PostMapping("/book")
     Book createBook(@RequestBody Book book);
